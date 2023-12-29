@@ -7,11 +7,11 @@ name: Win32 Release
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "zynfyr" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "zynfyr" ]
   workflow_dispatch:
-    branches: [ "main" ]
+    branches: [ "main", "zynfyr" ]
 
 env:
   # Path to the solution file relative to the root of the project.

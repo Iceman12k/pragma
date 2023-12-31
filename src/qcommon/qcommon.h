@@ -70,6 +70,10 @@ typedef struct debugline_s
 
 //============================================================================
 
+#define NET_RATE_MIN 5000 // was absurdly low (100) in Q2
+#define NET_RATE_MAX 25000
+#define NET_RATE_DEFAULT 15000 // was 5000 in Q2
+//============================================================================
 
 typedef struct sizebuf_s
 {
@@ -208,6 +212,7 @@ void CRC_Init(unsigned short *crcvalue);
 void CRC_ProcessByte(unsigned short *crcvalue, byte data);
 unsigned short CRC_Value(unsigned short crcvalue);
 unsigned short CRC_Block (byte *start, int count);
+unsigned short CRC_ChecksumFile(char* name, qboolean fatal);
 
 
 
@@ -815,7 +820,6 @@ void		Com_SetServerState (int state);
 
 unsigned	Com_BlockChecksum (void *buffer, int length);
 byte		COM_BlockSequenceCRCByte (byte *base, int length, int sequence);
-unsigned short CRC_ChecksumFile(char* name, qboolean fatal);
 
 float	frand(void);	// 0 ti 1
 float	crand(void);	// -1 to 1

@@ -212,6 +212,7 @@ void VectorInverse (vec3_t v);
 void VectorScale (vec3_t in, vec_t scale, vec3_t out);
 int Q_log2(int val);
 
+void AxisToAngles(vec3_t axis[3], vec3_t outAngles);
 void AnglesToAxis(vec3_t angles, vec3_t axis[3]);
 void AxisClear(vec3_t axis[3]);
 void AxisCopy(vec3_t in[3], vec3_t out[3]);
@@ -541,12 +542,7 @@ typedef struct
 
 	// add to command angles to get view direction
 	// changed by spawns, rotating objects, and teleporters
-
-#if PROTOCOL_FLOAT_PLAYERANGLES == 1
-	vec3_t		delta_angles;
-#else
 	short		delta_angles[3];
-#endif
 } pmove_state_t;
 
 #define PACKED_BSP 31
@@ -566,11 +562,7 @@ typedef struct usercmd_s
 {
 	byte	msec;
 	byte	buttons;
-#if PROTOCOL_FLOAT_PLAYERANGLES == 1
-	float	angles[3];
-#else
 	short	angles[3];
-#endif
 	short	forwardmove, sidemove, upmove;
 	byte	impulse;		// remove?
 } usercmd_t;

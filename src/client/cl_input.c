@@ -106,7 +106,7 @@ void KeyDown (kbutton_t *b)
 	c = Cmd_Argv(2);
 	b->downtime = atoi(c);
 	if (!b->downtime)
-		b->downtime = sys_frame_time - 100;
+		b->downtime = sys_frame_time - 100; // braxi -- figure out if this does affect servers variable fps
 
 	b->state |= 1 + 2;	// down + impulse down
 }
@@ -324,12 +324,7 @@ void CL_BaseMove (usercmd_t *cmd)
 void CL_ClampPitch (void)
 {
 	float	pitch;
-
-#if PROTOCOL_FLOAT_PLAYERANGLES == 1
-	pitch = cl.frame.playerstate.pmove.delta_angles[PITCH];
-#else
 	pitch = SHORT2ANGLE(cl.frame.playerstate.pmove.delta_angles[PITCH]);
-#endif
 	if (pitch > 180)
 		pitch -= 360;
 	if (cl.viewangles[PITCH] + pitch > 89)
@@ -364,17 +359,14 @@ void CL_FinishMove (usercmd_t *cmd)
 	// send milliseconds of time to apply the move
 	ms = cls.frametime * 1000;
 	if (ms > 250)
-		ms = 100;		// time was unreasonable
+		ms = SV_FRAMETIME_MSEC;	// time was unreasonable, braxi -- was 100, should likely match server tickrate
+
 	cmd->msec = ms;
 
 	CL_ClampPitch ();
 	for (i = 0; i < 3; i++)
 	{
-#if PROTOCOL_FLOAT_PLAYERANGLES == 1
-		cmd->angles[i] = cl.viewangles[i];
-#else
 		cmd->angles[i] = ANGLE2SHORT(cl.viewangles[i]);
-#endif
 	}
 	
 	cmd->impulse = in_impulse;
@@ -412,11 +404,7 @@ usercmd_t CL_CreateCmd (void)
 
 void IN_CenterView (void)
 {
-#if PROTOCOL_FLOAT_PLAYERANGLES == 1
-	cl.viewangles[PITCH] = -(cl.frame.playerstate.pmove.delta_angles[PITCH]);
-#else
 	cl.viewangles[PITCH] = -SHORT2ANGLE(cl.frame.playerstate.pmove.delta_angles[PITCH]);
-#endif
 }
 
 /*

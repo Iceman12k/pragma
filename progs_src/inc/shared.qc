@@ -11,7 +11,6 @@ string string_null = "";
 vector vec_null = '0 0 0';
 vector vec3_origin = vec_null; //temporary, ugly
 
-
 // ------------------------------------------------------
 // BG - defines shared by cgame and svgame
 // ------------------------------------------------------

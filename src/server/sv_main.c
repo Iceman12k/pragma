@@ -562,7 +562,7 @@ void SV_CalcPings (void)
 	client_t	*cl;
 	int			total, count;
 
-	for (i=0 ; i<sv_maxclients->value ; i++)
+	for (i = 0; i < sv_maxclients->value; i++)
 	{
 		cl = &svs.clients[i];
 		if (cl->state != cs_spawned )
@@ -570,7 +570,7 @@ void SV_CalcPings (void)
 
 		total = 0;
 		count = 0;
-		for (j=0 ; j<LATENCY_COUNTS ; j++)
+		for (j = 0; j < LATENCY_COUNTS; j++)
 		{
 			if (cl->frame_latency[j] > 0)
 			{
@@ -583,7 +583,7 @@ void SV_CalcPings (void)
 		else
 			cl->ping = total / count;
 
-		// let the game dll know about the ping
+		// let the game know about the ping
 		cl->edict->client->ping = cl->ping;
 	}
 }
@@ -597,12 +597,15 @@ Every few frames, gives all clients an allotment of milliseconds
 for their command moves.  If they exceed it, assume cheating.
 ===================
 */
+
 void SV_GiveMsec (void)
 {
 	int			i;
 	client_t	*cl;
 
-	if (sv.framenum & 15)
+	static const int num_frames = 15;
+
+	if (sv.framenum & num_frames)
 		return;
 
 	for (i=0 ; i<sv_maxclients->value ; i++)
@@ -611,7 +614,8 @@ void SV_GiveMsec (void)
 		if(cl->state == cs_free)
 			continue;
 		
-		cl->commandMsec = 1800;		// 1600 + some slop
+		cl->commandMsec = (num_frames * SV_FRAMETIME_MSEC) + 200;
+//		cl->commandMsec = 1800;		// braxi -- that was in Q2: 1600 + some slop
 	}
 }
 
@@ -697,20 +701,18 @@ void SV_CheckTimeouts (void)
 	droppoint = svs.realtime - 1000*timeout->value;
 	zombiepoint = svs.realtime - 1000*zombietime->value;
 
-	for (i=0,cl=svs.clients ; i<sv_maxclients->value ; i++,cl++)
+	for (i = 0, cl = svs.clients; i < sv_maxclients->value; i++, cl++)
 	{
 		// message times may be wrong across a changelevel
 		if (cl->lastmessage > svs.realtime)
 			cl->lastmessage = svs.realtime;
 
-		if (cl->state == cs_zombie
-		&& cl->lastmessage < zombiepoint)
+		if (cl->state == cs_zombie && cl->lastmessage < zombiepoint)
 		{
 			cl->state = cs_free;	// can now be reused
 			continue;
 		}
-		if ( (cl->state == cs_connected || cl->state == cs_spawned) 
-			&& cl->lastmessage < droppoint)
+		if ( (cl->state == cs_connected || cl->state == cs_spawned) && cl->lastmessage < droppoint)
 		{
 			SV_BroadcastPrintf (PRINT_HIGH, "%s timed out\n", cl->name);
 			SV_DropClient (cl); 
@@ -738,7 +740,6 @@ void SV_PrepWorldFrame (void)
 		// events only last for a single message
 		ent->s.event = 0;
 	}
-
 }
 
 
@@ -757,7 +758,7 @@ void SV_RunGameFrame (void)
 	// compression can get confused when a client
 	// has the "current" frame
 	sv.framenum++;
-	sv.time = sv.framenum*SV_FRAMETIME_MSEC;
+	sv.time = (sv.framenum * SV_FRAMETIME_MSEC);
 
 	// don't run if paused
 	if (!sv_paused->value || sv_maxclients->value > 1)
@@ -907,6 +908,7 @@ Pull specific info from a newly changed userinfo string
 into a more C freindly form.
 =================
 */
+
 void SV_UserinfoChanged (client_t *cl)
 {
 	char	*val;
@@ -928,16 +930,16 @@ void SV_UserinfoChanged (client_t *cl)
 	{
 		i = atoi(val);
 		cl->rate = i;
-		if (cl->rate < 100)
-			cl->rate = 100;
-		if (cl->rate > 15000)
-			cl->rate = 15000;
+		if (cl->rate < NET_RATE_MIN)
+			cl->rate = NET_RATE_MIN;
+		if (cl->rate > NET_RATE_MAX)
+			cl->rate = NET_RATE_MAX;
 	}
 	else
-		cl->rate = 5000;
+		cl->rate = NET_RATE_DEFAULT;
 
-	// msg command
-	val = Info_ValueForKey (cl->userinfo, "msg");
+	// messagelevel command
+	val = Info_ValueForKey (cl->userinfo, "messagelevel");
 	if (strlen(val))
 	{
 		cl->messagelevel = atoi(val);
@@ -975,8 +977,8 @@ void SV_Init (void)
 	sv_password = Cvar_Get("sv_password", "", 0);
 	sv_maxentities = Cvar_Get("sv_maxentities", "1024", CVAR_LATCH);
 
-	sv_maxvelocity = Cvar_Get("sv_maxevelocity", "1500", CVAR_LATCH);
-	sv_gravity = Cvar_Get("sv_gravity", "800", CVAR_LATCH);
+	sv_maxvelocity = Cvar_Get("sv_maxevelocity", "1500", 0);
+	sv_gravity = Cvar_Get("sv_gravity", "800", 0);
 
 
 #ifdef _DEBUG
@@ -997,7 +999,7 @@ void SV_Init (void)
 	allow_download_sounds = Cvar_Get ("allow_download_sounds", "1", CVAR_ARCHIVE);
 	allow_download_maps	  = Cvar_Get ("allow_download_maps", "1", CVAR_ARCHIVE);
 
-	sv_noreload = Cvar_Get ("sv_noreload", "0", 0);
+	sv_noreload = Cvar_Get ("sv_noreload", "1", 0);
 
 	public_server = Cvar_Get ("public", "0", 0);
 

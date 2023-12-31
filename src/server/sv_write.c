@@ -272,16 +272,8 @@ void SV_WritePlayerstateToClient (client_frame_t *from, client_frame_t *to, size
 
 	if (pflags & PS_M_DELTA_ANGLES)
 	{
-
 		for (i = 0; i < 3; i++)
-		{
-#if PROTOCOL_FLOAT_PLAYERANGLES == 1
-			MSG_WriteFloat(msg, ps->pmove.delta_angles[i]);
-#else
-			MSG_WriteShort(msg, ps->pmove.delta_angles[i]);
-#endif
-		}
-			
+			MSG_WriteShort(msg, ps->pmove.delta_angles[i]);		
 	}
 
 	// braxi: write bbox size to client for prediction
@@ -389,7 +381,8 @@ void SV_WriteFrameToClient (client_t *client, sizebuf_t *msg)
 		lastframe = -1;
 	}
 	else if (sv.framenum - client->lastframe >= (UPDATE_BACKUP - 3) )
-	{	// client hasn't gotten a good message through in a long time
+	{	
+		// client hasn't gotten a good message through in a long time
 //		Com_Printf ("%s: Delta request from out-of-date packet.\n", client->name);
 		oldframe = NULL;
 		lastframe = -1;

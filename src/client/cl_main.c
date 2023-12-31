@@ -73,11 +73,10 @@ cvar_t	*m_side;
 // userinfo
 //
 cvar_t	*info_password;
-cvar_t	*info_spectator;
+cvar_t	*info_msglevel;
 cvar_t	*cl_name;
-cvar_t	*rate;
+cvar_t	*cl_rate;
 cvar_t	*fov;
-cvar_t	*msg;
 cvar_t	*cl_hand;
 
 client_static_t	cls;
@@ -466,7 +465,7 @@ void CL_Connect_f (void)
 	
 	if (Com_ServerState ())
 	{	// if running a local server, kill it and reissue
-		SV_Shutdown (va("Server quit\n", msg), false);
+		SV_Shutdown ("Server quit\n", false);
 	}
 	else
 	{
@@ -1098,13 +1097,13 @@ void CL_InitLocal (void)
 	//
 	// userinfo
 	//
-	info_password = Cvar_Get ("password", "", CVAR_USERINFO);
-	info_spectator = Cvar_Get ("spectator", "0", CVAR_USERINFO);
-	cl_name = Cvar_Get ("name", "unnamed", CVAR_USERINFO | CVAR_ARCHIVE);
-	rate = Cvar_Get ("rate", "25000", CVAR_USERINFO | CVAR_ARCHIVE);	// FIXME
-	msg = Cvar_Get ("msg", "1", CVAR_USERINFO | CVAR_ARCHIVE);
-	cl_hand = Cvar_Get ("cl_hand", "1", CVAR_USERINFO | CVAR_ARCHIVE);
-	fov = Cvar_Get ("fov", "90", CVAR_USERINFO | CVAR_ARCHIVE);
+	info_password = Cvar_Get("password", "", CVAR_USERINFO);
+	info_msglevel = Cvar_Get("messagelevel", "1", CVAR_USERINFO | CVAR_ARCHIVE);
+
+	cl_name = Cvar_Get("name", "unnamed", CVAR_USERINFO | CVAR_ARCHIVE);
+	cl_rate = Cvar_Get("rate", va("%i", NET_RATE_DEFAULT), CVAR_USERINFO | CVAR_ARCHIVE);
+	cl_hand = Cvar_Get("cl_hand", "1", CVAR_USERINFO | CVAR_ARCHIVE);
+	fov = Cvar_Get("fov", "90", CVAR_USERINFO | CVAR_ARCHIVE);
 
 	//
 	// register our commands

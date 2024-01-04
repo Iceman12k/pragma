@@ -139,6 +139,18 @@ typedef struct
 	float	r, g, b;
 } glvert_t;
 
+typedef struct
+{
+	int	brush_polys;
+	int alias_tris;
+
+	int	texture_binds;
+
+	int	visible_lightmaps;
+	int	visible_textures;
+
+} rperfcounters_t;
+
 
 #define BACKFACE_EPSILON	0.01
 
@@ -156,8 +168,8 @@ extern	model_t		*currentmodel;
 extern	int			r_visframecount;
 extern	int			r_framecount;
 extern	cplane_t	frustum[4];
-extern	int			c_brush_polys, c_alias_polys;
 
+extern rperfcounters_t rperf;
 
 extern	int			gl_filter_min, gl_filter_max;
 
@@ -184,11 +196,11 @@ extern	cvar_t	*r_fullbright;
 extern	cvar_t	*r_novis;
 extern	cvar_t	*r_nocull;
 extern	cvar_t	*r_lerpmodels;
-extern cvar_t	*r_vertex_arrays;
 
 extern cvar_t	*gl_ext_swapinterval;
 extern cvar_t	*gl_ext_pointparameters;
-extern cvar_t	*gl_ext_compiled_vertex_array;
+
+extern cvar_t	*r_overbrightbits;
 
 extern cvar_t	*r_particle_min_size;
 extern cvar_t	*r_particle_max_size;
@@ -201,7 +213,6 @@ extern	cvar_t	*r_bitdepth;
 extern	cvar_t	*r_mode;
 extern	cvar_t	*r_log;
 extern	cvar_t	*r_lightmap;
-extern	cvar_t	*r_shadows;
 extern	cvar_t	*r_dynamic;
 extern  cvar_t  *r_monolightmap;
 extern	cvar_t	*r_nobind;
@@ -213,8 +224,6 @@ extern	cvar_t	*r_finish;
 extern	cvar_t	*r_ztrick;
 extern	cvar_t	*r_clear;
 extern	cvar_t	*r_cull;
-extern	cvar_t	*r_polyblend;
-extern	cvar_t	*r_flashblend;
 extern	cvar_t	*r_modulate;
 extern	cvar_t	*r_drawbuffer;
 extern  cvar_t  *gl_driver;
@@ -235,9 +244,6 @@ extern	int		gl_solid_format;
 extern	int		gl_alpha_format;
 extern	int		gl_tex_solid_format;
 extern	int		gl_tex_alpha_format;
-
-extern	int		c_visible_lightmaps;
-extern	int		c_visible_textures;
 
 extern	float	r_world_matrix[16];
 

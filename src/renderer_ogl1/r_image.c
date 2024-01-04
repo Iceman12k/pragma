@@ -42,6 +42,9 @@ int		gl_filter_max = GL_LINEAR;
 
 void GL_EnableMultitexture( qboolean enable )
 {
+	if (!qglActiveTextureARB)
+		return;
+
 	if ( enable )
 	{
 		GL_SelectTexture( GL_TEXTURE1_ARB );
@@ -61,6 +64,9 @@ void GL_EnableMultitexture( qboolean enable )
 void GL_SelectTexture( GLenum texture )
 {
 	int tmu;
+
+	if (!qglActiveTextureARB)
+		return;
 
 	if ( texture == GL_TEXTURE0_ARB )
 		tmu = 0;
@@ -97,12 +103,18 @@ void GL_Bind (int texnum)
 		texnum = font_current->texnum;
 	if ( gl_state.currenttextures[gl_state.currenttmu] == texnum)
 		return;
+
+	rperf.texture_binds++;
+
 	gl_state.currenttextures[gl_state.currenttmu] = texnum;
 	qglBindTexture(GL_TEXTURE_2D, texnum);
 }
 
 void GL_MBind( GLenum target, int texnum )
 {
+	if (!qglActiveTextureARB)
+		return;
+
 	GL_SelectTexture( target );
 	if ( target == GL_TEXTURE0_ARB )
 	{

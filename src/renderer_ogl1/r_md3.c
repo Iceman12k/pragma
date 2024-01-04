@@ -34,7 +34,7 @@ extern float	model_shadelight[3];
 
 /*
 =================
-MD3_DecodeNormals
+MD3_FastDecodeNormals
 
 Decode the lat/lng normal to a 3 float normal
 
@@ -48,7 +48,7 @@ based on:
 https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/q3map/misc_model.c#L210
 =================
 */
-static void MD3_DecodeNormals(model_t* mod, md3Header_t* model)
+static void MD3_FastDecodeNormals(model_t* mod, md3Header_t* model)
 {
 	md3Surface_t* surf;
 	md3XyzNormal_t* xyz;
@@ -76,7 +76,7 @@ static void MD3_DecodeNormals(model_t* mod, md3Header_t* model)
 			mod->normals[i][j][1] = sin(lat) * sin(lng);
 			mod->normals[i][j][2] = cos(lng);
 
-			//			printf("surf %i vert %i normal [%f %f %f]\n", i, j, mod->normals[i][j][0], mod->normals[i][j][1], mod->normals[i][j][2]);
+//			printf("surf %i vert %i normal [%f %f %f]\n", i, j, mod->normals[i][j][0], mod->normals[i][j][1], mod->normals[i][j][2]);
 		}
 		surf = (md3Surface_t*)((byte*)surf + surf->ofsEnd);
 	}
@@ -238,7 +238,7 @@ void Mod_LoadMD3(model_t* mod, void* buffer, lod_t lod)
 			st->st[1] = LittleFloat(st->st[1]);
 		}
 
-		// swap all the XyzNormals and decode normals
+		// swap all the XyzNormals
 		xyz = (md3XyzNormal_t*)((byte*)surf + surf->ofsXyzNormals);
 		for (j = 0; j < surf->numVerts * surf->numFrames; j++, xyz++)
 		{
@@ -247,6 +247,11 @@ void Mod_LoadMD3(model_t* mod, void* buffer, lod_t lod)
 			xyz->xyz[2] = LittleShort(xyz->xyz[2]);
 
 			xyz->normal = LittleShort(xyz->normal);
+
+			// scale verticles to qu
+			//xyz->xyz[0] = (xyz->xyz[0] / 64);
+			//xyz->xyz[1] = (xyz->xyz[1] / 64);
+			//xyz->xyz[2] = (xyz->xyz[2] / 64);
 		}
 
 		// find the next surface
@@ -385,16 +390,16 @@ static void R_LerpMD3Frame(float lerp, int index, md3XyzNormal_t* oldVert, md3Xy
 	outVert[1] = (p1[1] + lerp * (p2[1] - p1[1]));
 	outVert[2] = (p1[2] + lerp * (p2[2] - p1[2]));
 
-	// scale verticles to qu
-	outVert[0] = outVert[0] / 64.0f;
-	outVert[1] = outVert[1] / 64.0f;
-	outVert[2] = outVert[2] / 64.0f;
-
 	// retrieve normal
 	lat = (vert->normal >> 8) & 0xff;
 	lng = (vert->normal & 0xff);
 	lat *= (FUNCTABLE_SIZE / 256);
 	lng *= (FUNCTABLE_SIZE / 256);
+
+	// scale verticles to qu
+	outVert[0] = (outVert[0] / 64);
+	outVert[1] = (outVert[1] / 64);
+	outVert[2] = (outVert[2] / 64);
 
 	outNormal[0] = sinTable[(lat + (FUNCTABLE_SIZE / 4)) & FUNCTABLE_MASK] * sinTable[lng];
 	outNormal[1] = sinTable[lat] * sinTable[lng];
@@ -452,6 +457,8 @@ void R_DrawMD3Model(centity_t* ent, lod_t lod, float lerp)
 		oldVert = (short*)((byte*)surface + surface->ofsXyzNormals) + (ent->oldframe * surface->numVerts * 4); // current keyframe verts
 		vert = (short*)((byte*)surface + surface->ofsXyzNormals) + (ent->frame * surface->numVerts * 4); // next keyframe verts
 
+		if(r_speeds->value)
+			rperf.alias_tris += surface->numTriangles;
 
 		// for each triangle in surface
 		for (j = 0; j < surface->numTriangles; j++, triangle++)
@@ -465,12 +472,11 @@ void R_DrawMD3Model(centity_t* ent, lod_t lod, float lerp)
 
 				R_LerpMD3Frame(lerp, index, &oldVert[index], &vert[index], v, n);
 
-				float l = DotProduct(n, model_shadevector);
+				float lambert = DotProduct(n, model_shadevector);
 				if (r_fullbright->value ||currententity->renderfx & RF_FULLBRIGHT)
-					l = 1.0f; 
+					lambert = 1.0f; 
 
-				qglColor4f(1,1,1, ent->alpha);
-				qglColor4f(l * model_shadelight[0], l * model_shadelight[1], l * model_shadelight[2], ent->alpha);
+				qglColor4f(lambert * model_shadelight[0], lambert * model_shadelight[1], lambert * model_shadelight[2], ent->alpha);
 				
 				qglTexCoord2f(texcoord[index].st[0], texcoord[index].st[1]);
 				qglVertex3fv(v);
@@ -521,74 +527,9 @@ static void MD3_Normals(md3Header_t* model, float yangle)
 			normal[1] = temp[0] * angleSin + temp[1] * angleCos;
 			normal[2] = temp[2];
 
-			printf("yawangle %f = surf %i tri %i normal [%f %f %f]\n", yangle, i, j, normal[0], normal[1], normal[2]);
+//			printf("yawangle %f = surf %i tri %i normal [%f %f %f]\n", yangle, i, j, normal[0], normal[1], normal[2]);
 		}
 		surf = (md3Surface_t*)((byte*)surf + surf->ofsEnd);
 	}
-	printf("done.\n");
 }
-#endif
-
-#if 0
-/*
-======================
-CG_PositionEntityOnTag
-
-Modifies the entities position and axis by the given
-tag location
-======================
-*/
-void CG_PositionEntityOnTag(refEntity_t* entity, const refEntity_t* parent,
-	qhandle_t parentModel, char* tagName) {
-	int				i;
-	orientation_t	lerped;
-
-	// lerp the tag
-	trap_R_LerpTag(&lerped, parentModel, parent->oldframe, parent->frame,
-		1.0 - parent->backlerp, tagName);
-
-	// FIXME: allow origin offsets along tag?
-	VectorCopy(parent->origin, entity->origin);
-	for (i = 0; i < 3; i++) {
-		VectorMA(entity->origin, lerped.origin[i], parent->axis[i], entity->origin);
-	}
-
-	// had to cast away the const to avoid compiler problems...
-	MatrixMultiply(lerped.axis, ((refEntity_t*)parent)->axis, entity->axis);
-	entity->backlerp = parent->backlerp;
-}
-
-
-/*
-======================
-CG_PositionRotatedEntityOnTag
-
-Modifies the entities position and axis by the given
-tag location
-======================
-*/
-void CG_PositionRotatedEntityOnTag(centity_t *entity, const refEntity_t* parent, model_t *mod, char* tagName) 
-{
-	int				i;
-	orientation_t	lerped;
-	vec3_t			tempAxis[3];
-
-
-	if(mod->type != MOD_MD3)
-		return
-	//AxisClear( entity->axis );
-	// lerp the tag
-	MD3_LerpTag(&lerped, mod->md3[LOD_HIGH], parent->oldframe, parent->frame, 1.0 - parent->backlerp, tagName);
-
-	VectorCopy(parent->origin, entity->origin);
-	for (i = 0; i < 3; i++) 
-	{
-		VectorMA(entity->origin, lerped.origin[i], parent->axis[i], entity->origin);
-	}
-
-	MatrixMultiply(entity->axis, lerped.axis, tempAxis);
-	MatrixMultiply(tempAxis, ((refEntity_t*)parent)->axis, entity->axis);
-}
-
-
 #endif

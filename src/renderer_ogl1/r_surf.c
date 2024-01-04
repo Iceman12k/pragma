@@ -22,6 +22,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_local.h"
 
+#define GL_COMBINE_EXT 	34160
+#define GL_RGB_SCALE_EXT  34163
+
 static vec3_t	modelorg;		// relative to viewpoint
 
 msurface_t	*r_alpha_surfaces;
@@ -35,9 +38,6 @@ msurface_t	*r_alpha_surfaces;
 #define	BLOCK_HEIGHT	128
 
 #define	MAX_LIGHTMAPS	128
-
-int		c_visible_lightmaps;
-int		c_visible_textures;
 
 #define GL_LIGHTMAP_FORMAT GL_RGBA
 
@@ -223,7 +223,7 @@ void DrawGLFlowingPoly (msurface_t *fa)
 /*
 ** R_DrawTriangleOutlines
 */
-extern void R_BeginLinesRendering();
+extern void R_BeginLinesRendering(qboolean dt);
 extern void R_EndLinesRendering();
 void R_DrawTriangleOutlines (void)
 {
@@ -232,10 +232,9 @@ void R_DrawTriangleOutlines (void)
 
 	if (!r_showtris->value)
 		return;
-
-	ri.Con_Printf(PRINT_LOW, "r_showtris\n");
-	R_WriteToDepthBuffer(false);
-	R_BeginLinesRendering();
+;
+	R_WriteToDepthBuffer(true);
+	R_BeginLinesRendering(r_showtris->value >= 2 ? true : false);
 	for (i = 0; i < MAX_LIGHTMAPS; i++)
 	{
 		msurface_t *surf;
@@ -362,7 +361,7 @@ void R_BlendLightmaps (void)
 	}
 
 	if ( currentmodel == r_worldmodel )
-		c_visible_lightmaps = 0;
+		rperf.visible_lightmaps = 0;
 
 	/*
 	** render static lightmaps first
@@ -372,13 +371,25 @@ void R_BlendLightmaps (void)
 		if ( gl_lms.lightmap_surfaces[i] )
 		{
 			if (currentmodel == r_worldmodel)
-				c_visible_lightmaps++;
+				rperf.visible_lightmaps++;
+
 			GL_Bind( gl_state.lightmap_textures + i);
 
 			for ( surf = gl_lms.lightmap_surfaces[i]; surf != 0; surf = surf->lightmapchain )
 			{
-				if ( surf->polys )
-					DrawGLPolyChain( surf->polys, 0, 0 );
+				if (surf->polys)
+				{
+					// --- begin yquake 2 ---
+					// Apply overbright bits to the static lightmaps
+					if (r_overbrightbits->value)
+					{
+						GL_TexEnv(GL_COMBINE_EXT);
+						qglTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, r_overbrightbits->value);
+					}
+					// --- end yquake 2 ---
+
+					DrawGLPolyChain(surf->polys, 0, 0);
+				}
 			}
 		}
 	}
@@ -393,7 +404,7 @@ void R_BlendLightmaps (void)
 		GL_Bind( gl_state.lightmap_textures+0 );
 
 		if (currentmodel == r_worldmodel)
-			c_visible_lightmaps++;
+			rperf.visible_lightmaps++;
 
 		newdrawsurf = gl_lms.lightmap_surfaces[0];
 
@@ -422,10 +433,21 @@ void R_BlendLightmaps (void)
 				// draw all surfaces that use this lightmap
 				for ( drawsurf = newdrawsurf; drawsurf != surf; drawsurf = drawsurf->lightmapchain )
 				{
-					if ( drawsurf->polys )
-						DrawGLPolyChain( drawsurf->polys, 
-							              ( drawsurf->light_s - drawsurf->dlight_s ) * ( 1.0 / 128.0 ), 
-										( drawsurf->light_t - drawsurf->dlight_t ) * ( 1.0 / 128.0 ) );
+					if (drawsurf->polys)
+					{
+						// --- begin yquake 2 ---
+						// Apply overbright bits to the dynamic lightmaps
+						if (r_overbrightbits->value)
+						{
+							GL_TexEnv(GL_COMBINE_EXT);
+							qglTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, r_overbrightbits->value);
+						}
+						// --- end yquake 2 ---
+
+						DrawGLPolyChain(drawsurf->polys,
+							(drawsurf->light_s - drawsurf->dlight_s) * (1.0 / 128.0),
+							(drawsurf->light_t - drawsurf->dlight_t) * (1.0 / 128.0));
+					}
 				}
 
 				newdrawsurf = drawsurf;
@@ -478,22 +500,43 @@ void R_RenderBrushPoly (msurface_t *fa)
 	image_t		*image;
 	qboolean is_dynamic = false;
 
-	c_brush_polys++;
+	rperf.brush_polys++;
 
 	image = R_TextureAnimation (fa->texinfo);
 
 	if (fa->flags & SURF_DRAWTURB)
-	{	
-		GL_Bind( image->texnum );
+	{
+		GL_Bind(image->texnum);
 
-		// warp texture, no lightmaps
-		GL_TexEnv( GL_MODULATE );
-		qglColor4f( gl_state.inverse_intensity, 
-			        gl_state.inverse_intensity,
-					gl_state.inverse_intensity,
-					1.0F );
-		EmitWaterPolys (fa);
-		GL_TexEnv( GL_REPLACE );
+// --- begin yquake2 ---
+		/* This is a hack ontop of a hack. Warping surfaces like those generated
+		   by R_EmitWaterPolys() don't have a lightmap. Original Quake II therefore
+		   negated the global intensity on those surfaces, because otherwise they
+		   would show up much too bright. When we implemented overbright bits this
+		   hack modified the global GL state in an incompatible way. So implement
+		   a new hack, based on overbright bits... Depending on the value set to
+		   r_overbrightbits the result is different:
+
+			0: Old behaviour.
+			1: No overbright bits on the global scene but correct lighting on
+			   warping surfaces.
+			2: Overbright bits on the global scene but not on warping surfaces.
+				They oversaturate otherwise. */
+
+		if (r_overbrightbits->value)
+		{
+			GL_TexEnv(GL_COMBINE_EXT);
+			qglTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1);
+		}
+		else
+		{
+			GL_TexEnv(GL_MODULATE);
+			qglColor4f(gl_state.inverse_intensity, gl_state.inverse_intensity, gl_state.inverse_intensity, 1.0f);
+		}
+// --- end yquake2 ---
+
+		EmitWaterPolys(fa);
+		GL_TexEnv(GL_REPLACE);
 
 		return;
 	}
@@ -504,14 +547,11 @@ void R_RenderBrushPoly (msurface_t *fa)
 		GL_TexEnv( GL_REPLACE );
 	}
 
-//======
-//PGM
+
 	if(fa->texinfo->flags & SURF_FLOWING)
 		DrawGLFlowingPoly (fa);
 	else
 		DrawGLPoly (fa->polys);
-//PGM
-//======
 
 	/*
 	** check for lightmap modification
@@ -602,7 +642,7 @@ void R_DrawAlphaSurfaces (void)
 	for (s=r_alpha_surfaces ; s ; s=s->texturechain)
 	{
 		GL_Bind(s->texinfo->image->texnum);
-		c_brush_polys++;
+		rperf.brush_polys++;
 		if (s->texinfo->flags & SURF_TRANS33)
 			qglColor4f (intens,intens,intens,0.33);
 		else if (s->texinfo->flags & SURF_TRANS66)
@@ -633,7 +673,7 @@ void DrawTextureChains (void)
 	msurface_t	*s;
 	image_t		*image;
 
-	c_visible_textures = 0;
+	rperf.visible_textures = 0;
 
 //	GL_TexEnv( GL_REPLACE );
 
@@ -643,7 +683,7 @@ void DrawTextureChains (void)
 			continue;
 		if (!image->texturechain)
 			continue;
-		c_visible_textures++;
+		rperf.visible_textures++;
 
 		for ( s = image->texturechain; s ; s=s->texturechain)
 		{
@@ -747,7 +787,7 @@ dynamic:
 
 		}
 
-		c_brush_polys++;
+		rperf.brush_polys++;
 
 		GL_MBind( GL_TEXTURE0_ARB, image->texnum );
 		GL_MBind( GL_TEXTURE1_ARB, gl_state.lightmap_textures + lmtex );
@@ -791,7 +831,7 @@ dynamic:
 	}
 	else
 	{
-		c_brush_polys++;
+		rperf.brush_polys++;
 
 		GL_MBind( GL_TEXTURE0_ARB, image->texnum );
 		GL_MBind( GL_TEXTURE1_ARB, gl_state.lightmap_textures + lmtex );
@@ -849,13 +889,11 @@ void R_DrawInlineBModel (void)
 	dlight_t	*lt;
 
 	// calculate dynamic lighting for bmodel
-	if ( !r_flashblend->value )
+
+	lt = r_newrefdef.dlights;
+	for (k = 0; k < r_newrefdef.num_dlights; k++, lt++)
 	{
-		lt = r_newrefdef.dlights;
-		for (k=0 ; k<r_newrefdef.num_dlights ; k++, lt++)
-		{
-			R_MarkLights (lt, 1<<k, currentmodel->nodes + currentmodel->firstnode);
-		}
+		R_MarkLights (lt, 1<<k, currentmodel->nodes + currentmodel->firstnode);
 	}
 
 	psurf = &currentmodel->surfaces[currentmodel->firstmodelsurface];

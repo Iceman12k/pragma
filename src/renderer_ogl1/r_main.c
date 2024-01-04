@@ -24,7 +24,6 @@ void R_Clear (void);
 
 viddef_t	vid;
 
-void R_DrawMD3Model(centity_t* ent);
 
 model_t		*r_worldmodel;
 
@@ -44,7 +43,7 @@ cplane_t	frustum[4];
 int			r_visframecount;	// bumped when going to a new PVS
 int			r_framecount;		// used for dlight push checking
 
-int			c_brush_polys, c_alias_polys;
+rperfcounters_t rperf;
 
 float		v_blend[4];			// final blending color
 
@@ -282,19 +281,15 @@ void R_DrawEntitiesOnList (void)
 	if (!r_drawentities->value)
 		return;
 
-	
-//	ri.Con_Printf(PRINT_LOW, "BEGIN R_DrawEntitiesOnList\n");
 	// draw non-transparent first
 	for (i = 0; i < r_newrefdef.num_entities; i++)
 	{
-//		ri.Con_Printf(PRINT_LOW, "currententity = %i - currentmodel: %s\n", i, currentmodel->name);
 		currententity = &r_newrefdef.entities[i];
 		currentmodel = currententity->model;
 		if ((currententity->renderfx & RF_TRANSLUCENT))
 			continue;	// transparent
 		R_DrawCurrentEntity();
 	}
-//	ri.Con_Printf(PRINT_LOW, "END R_DrawEntitiesOnList\n");
 
 
 	// draw transparent entities
@@ -313,95 +308,6 @@ void R_DrawEntitiesOnList (void)
 	R_WriteToDepthBuffer(GL_TRUE);		// reenable z writing
 }
 
-
-#if 0
-
-void R_DrawEntitiesOnList(void)
-{
-	int		i;
-
-	if (!r_drawentities->value)
-		return;
-
-	// draw non-transparent first
-	for (i = 0; i < r_newrefdef.num_entities; i++)
-	{
-		currententity = &r_newrefdef.entities[i];
-		if (currententity->renderfx & RF_TRANSLUCENT)
-			continue;	// solid
-
-		if (currententity->renderfx & RF_BEAM)
-		{
-			R_DrawBeam(currententity);
-		}
-		else
-		{
-			currentmodel = currententity->model;
-			if (!currentmodel)
-			{
-				R_DrawNullModel();
-				continue;
-			}
-			switch (currentmodel->type)
-			{
-			case MOD_MD3:
-				R_DrawMD3Model(currententity);
-				break;
-			case MOD_BRUSH:
-				R_DrawBrushModel(currententity);
-				break;
-			case MOD_SPRITE:
-				R_DrawSpriteModel(currententity);
-				break;
-			default:
-				ri.Sys_Error(ERR_DROP, "Bad modeltype");
-				break;
-			}
-		}
-	}
-
-	// draw transparent entities
-	// we could sort these if it ever becomes a problem...
-	qglDepthMask(0);		// no z writes
-	for (i = 0; i < r_newrefdef.num_entities; i++)
-	{
-		currententity = &r_newrefdef.entities[i];
-		if (!(currententity->renderfx & RF_TRANSLUCENT))
-			continue;	// solid
-
-		if (currententity->renderfx & RF_BEAM)
-		{
-			R_DrawBeam(currententity);
-		}
-		else
-		{
-			currentmodel = currententity->model;
-
-			if (!currentmodel)
-			{
-				R_DrawNullModel();
-				continue;
-			}
-			switch (currentmodel->type)
-			{
-			case MOD_MD3:
-				R_DrawMD3Model(currententity);
-				break;
-			case MOD_BRUSH:
-				R_DrawBrushModel(currententity);
-				break;
-			case MOD_SPRITE:
-				R_DrawSpriteModel(currententity);
-				break;
-			default:
-				ri.Sys_Error(ERR_DROP, "Bad modeltype");
-				break;
-			}
-		}
-	}
-	qglDepthMask(1);		// back to writing
-}
-#endif
 /*
 ** GL_DrawParticles
 **
@@ -473,14 +379,11 @@ void R_DrawParticles (void)
 
 /*
 ============
-R_PolyBlend
+R_ViewBlendEffect
 ============
 */
-void R_PolyBlend (void)
+void R_ViewBlendEffect (void)
 {
-	if (!r_polyblend->value)
-		return;
-
 	if (!v_blend[3])
 		return; // transparent
 
@@ -505,9 +408,10 @@ void R_PolyBlend (void)
 	qglVertex3f (10, 100, -100);
 	qglEnd ();
 
-	R_Blend(false);
-	qglEnable (GL_TEXTURE_2D);
 	R_AlphaTest(true);
+	R_Blend(false);
+
+	qglEnable(GL_TEXTURE_2D);
 	qglColor4f(1,1,1,1);
 }
 
@@ -605,8 +509,8 @@ void R_SetupFrame (void)
 	for (i=0 ; i<4 ; i++)
 		v_blend[i] = r_newrefdef.blend[i];
 
-	c_brush_polys = 0;
-	c_alias_polys = 0;
+	rperf.brush_polys = 0;
+	rperf.alias_tris = 0;
 
 	// clear out the portion of the screen that the NOWORLDMODEL defines
 	if ( r_newrefdef.rdflags & RDF_NOWORLDMODEL )
@@ -738,10 +642,6 @@ void R_Clear (void)
 
 }
 
-void R_Flash(void)
-{
-	R_PolyBlend ();
-}
 
 /*
 ================
@@ -764,8 +664,9 @@ void R_RenderView (refdef_t *fd)
 
 	if (r_speeds->value)
 	{
-		c_brush_polys = 0;
-		c_alias_polys = 0;
+		rperf.brush_polys = 0;
+		rperf.alias_tris = 0;
+		rperf.texture_binds = 0;
 	}
 
 	R_PushDlights ();
@@ -787,21 +688,22 @@ void R_RenderView (refdef_t *fd)
 
 	R_DrawDebugLines();
 
-	R_RenderDlights ();
-
-	R_DrawParticles ();
+//	R_RenderDlights ();
 
 	R_DrawAlphaSurfaces ();
 
-	R_Flash();
+	R_DrawParticles();
+
+	R_ViewBlendEffect();
 
 	if (r_speeds->value)
 	{
-		ri.Con_Printf (PRINT_ALL, "%4i wpoly %4i epoly %i tex %i lmaps\n",
-			c_brush_polys, 
-			c_alias_polys, 
-			c_visible_textures, 
-			c_visible_lightmaps); 
+		ri.Con_Printf (PRINT_ALL, "%4i bsppolys, %4i mdltris, %i vistex, %i vislmaps, %i texbinds\n",
+			rperf.brush_polys,
+			rperf.alias_tris,
+			rperf.visible_textures, 
+			rperf.visible_lightmaps,
+			rperf.texture_binds); 
 	}
 }
 
@@ -910,6 +812,30 @@ void R_BeginFrame( float camera_separation )
 	{
 		r_gamma->modified = false;
 	}
+
+	// --- begin yquake 2---
+	// Clamp overbrightbits
+	if (r_overbrightbits->modified)
+	{
+		if (r_overbrightbits->value < 0)
+		{
+			ri.Cvar_Set("r_overbrightbits", "0");
+		}
+		else if (r_overbrightbits->value > 2)
+		{
+			/* braxi -- Setting `r_overbrightbits 3` was crashing, according to GL docs, a value of 3 is WRONG:
+
+			If the pName parameter is GL_RGB_SCALE_EXT, or GL_ALPHA_SCALE,
+			the Parameter(s) parameter is (or points to) a floating-point scale factor.
+			Only three such scale factors are valid: 1.0, 2.0, and 4.0. The default value is 1.0.
+			
+			*/
+			ri.Cvar_Set("r_overbrightbits", "4");
+		}
+
+		r_overbrightbits->modified = false;
+	}
+	// -- end yquake2 ---
 
 	GLimp_BeginFrame( camera_separation );
 

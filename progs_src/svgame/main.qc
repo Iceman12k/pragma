@@ -10,7 +10,7 @@ void() initAnimTrees;
 
 entity tag_attach;
 float mdl_xyz, mdl_gun;
-float ttime = 0.5;
+float ttime = 0.05;
 
 void() testmodel_think =
 {	
@@ -19,9 +19,9 @@ void() testmodel_think =
 	
 	float numframes = getframescount(self.modelindex);
 		
-//	self.animFrame  ++;
-//	if(self.animFrame > numframes)
-//		self.animFrame = 0;
+	self.animFrame  ++;
+	if(self.animFrame > numframes)
+		self.animFrame = 0;
 	
 	self.angles_y += 4;
 	self.angles_x += 2;
@@ -31,12 +31,45 @@ void() testmodel_think =
 	tag_attach.origin = tag_pos;
 	tag_attach.angles = tag_rot;
 	
-	print("'tag_flash' in frame ", ftos(self.animFrame)," tag_pos = ", vtos(tag_pos), ", tag_rot = ", vtos(tag_rot), "\n");
+//	print("'tag_flash' in frame ", ftos(self.animFrame)," tag_pos = ", vtos(tag_pos), ", tag_rot = ", vtos(tag_rot), "\n");
 	
 	self.nextthink = g_time + ttime;
 	
 	drawstring(self.origin + '0 0 38', '1 1 1', 0.25, false, ttime, "parent angles: ", vtos(self.angles));
 	drawstring(self.origin + '0 0 34', '1 1 1', 0.25, false, ttime, ftos(self.animFrame), "/", ftos(numframes) );
+};
+
+
+// test object will be fullbright and red only for a single client
+float(entity client) TestEntityStateForClient =
+{
+	if(client == getent(1)) // local player
+	{
+		self.renderFlags = RF_FULLBRIGHT | RF_COLOR;
+		self.renderColor = '1 0 0';
+	}	
+	return true; // show to everyone
+};
+
+void() TestEntityThink =
+{
+	self.EntityStateForClient = 0;
+	print("self.EntityStateForClient = 0\n");
+};
+
+void() test_customstate
+{
+	entity ent;
+	ent = spawn();
+	
+	setmodel(ent, "models/mutant.md3");
+	setorigin(ent, '0 0 100');
+	
+	ent.EntityStateForClient = TestEntityStateForClient;
+	ent.think = TestEntityThink;
+	ent.nextthink = g_time + 10;
+	
+	linkentity(ent);
 };
 
 /*
@@ -66,6 +99,7 @@ void() main =
 	initAnimTrees();
 	
 #if 1	
+	test_customstate();
 	// this is not really a good idea for dedicated server
 	if(cvar("dedicated") == 0)
 	{
@@ -111,5 +145,6 @@ run at the end of each server frame
 void() EndFrame =
 {
 };
+
 
 

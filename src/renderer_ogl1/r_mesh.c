@@ -120,11 +120,22 @@ get lighting information for centity
 		}
 	}
 
+	// --- begin yquake2 ---
+	// Apply r_overbrightbits to the mesh. If we don't do this they will appear slightly dimmer relative to walls.
+	if (r_overbrightbits->value)
+	{
+		for (i = 0; i < 3; ++i)
+		{
+			model_shadelight[i] *= r_overbrightbits->value;
+		}
+	}
+	// --- end yquake2 ---
+
 	// this is uttery shit
 	an = ent->angles[1] / 180 * M_PI;
 	model_shadevector[0] = cos(-an);
 	model_shadevector[1] = sin(-an);
-	model_shadevector[2] = 2;
+	model_shadevector[2] = 100;
 	VectorNormalize(model_shadevector);
 }
 

@@ -118,7 +118,6 @@ float SURF_NODRAW		= 128;		// don't bother referencing the texture
 #define	SVF_SINGLECLIENT	16	// send to only one client (.showto must be set to desider player entity number)
 #define	SVF_ONLYTEAM		32	// send only to players in matching team team (.showto must match team)
 
-
 // entity_state_t->effects
 // Effects are things handled on the client side (lights, particles, frame animations)
 // that happen constantly on the given entity. An entity that has 

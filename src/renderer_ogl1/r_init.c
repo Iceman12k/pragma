@@ -33,7 +33,7 @@ cvar_t* r_nocull;
 cvar_t* r_lerpmodels;
 cvar_t* r_lefthand;
 
-cvar_t* r_vertex_arrays;
+cvar_t* r_overbrightbits;
 
 cvar_t* r_particle_min_size;
 cvar_t* r_particle_max_size;
@@ -44,14 +44,12 @@ cvar_t* r_particle_att_c;
 
 cvar_t* gl_ext_swapinterval;
 cvar_t* gl_ext_pointparameters;
-cvar_t* gl_ext_compiled_vertex_array;
 
 cvar_t* r_log;
 cvar_t* r_bitdepth;
 cvar_t* r_drawbuffer;
 cvar_t* gl_driver;
 cvar_t* r_lightmap;
-cvar_t* r_shadows;
 cvar_t* r_mode;
 cvar_t* r_dynamic;
 cvar_t* r_monolightmap;
@@ -65,8 +63,6 @@ cvar_t* r_ztrick;
 cvar_t* r_finish;
 cvar_t* r_clear;
 cvar_t* r_cull;
-cvar_t* r_polyblend;
-cvar_t* r_flashblend;
 cvar_t* r_saturatelighting;
 cvar_t* r_swapinterval;
 cvar_t* r_texturemode;
@@ -93,12 +89,17 @@ void R_RegisterCvarsAndCommands(void)
 {
 	r_lefthand = ri.Cvar_Get("cl_hand", "1", CVAR_USERINFO | CVAR_ARCHIVE);
 	r_norefresh = ri.Cvar_Get("r_norefresh", "0", 0);
+
 	r_fullbright = ri.Cvar_Get("r_fullbright", "0", CVAR_CHEAT);
+
 	r_drawentities = ri.Cvar_Get("r_drawentities", "1", CVAR_CHEAT);
 	r_drawworld = ri.Cvar_Get("r_drawworld", "1", CVAR_CHEAT);
+
 	r_novis = ri.Cvar_Get("r_novis", "0", CVAR_CHEAT);
 	r_nocull = ri.Cvar_Get("r_nocull", "0", CVAR_CHEAT);
+
 	r_lerpmodels = ri.Cvar_Get("r_lerpmodels", "1", 0);
+
 	r_speeds = ri.Cvar_Get("r_speeds", "0", 0);
 
 	r_particle_min_size = ri.Cvar_Get("r_particle_min_size", "2", CVAR_ARCHIVE);
@@ -113,8 +114,7 @@ void R_RegisterCvarsAndCommands(void)
 	r_bitdepth = ri.Cvar_Get("r_bitdepth", "0", 0);
 	r_mode = ri.Cvar_Get("r_mode", "3", CVAR_ARCHIVE);
 	r_lightmap = ri.Cvar_Get("r_lightmap", "0",CVAR_CHEAT);
-	r_shadows = ri.Cvar_Get("r_shadows", "0", CVAR_ARCHIVE);
-	r_dynamic = ri.Cvar_Get("r_dynamic", "1", 0);
+	r_dynamic = ri.Cvar_Get("r_dynamic", "1", CVAR_CHEAT);
 	r_nobind = ri.Cvar_Get("r_nobind", "0", CVAR_CHEAT);
 	r_round_down = ri.Cvar_Get("r_round_down", "0", 0);
 	r_picmip = ri.Cvar_Get("r_picmip", "0", 0);
@@ -124,8 +124,6 @@ void R_RegisterCvarsAndCommands(void)
 	r_finish = ri.Cvar_Get("r_finish", "0", CVAR_ARCHIVE);
 	r_clear = ri.Cvar_Get("r_clear", "0", 0);
 	r_cull = ri.Cvar_Get("r_cull", "1", CVAR_CHEAT);
-	r_polyblend = ri.Cvar_Get("r_polyblend", "1", 0);
-	r_flashblend = ri.Cvar_Get("r_flashblend", "0", 0);
 	r_monolightmap = ri.Cvar_Get("r_monolightmap", "0", CVAR_CHEAT);
 	gl_driver = ri.Cvar_Get("gl_driver", "opengl32", CVAR_ARCHIVE);
 	r_texturemode = ri.Cvar_Get("r_texturemode", "GL_NEAREST_MIPMAP_NEAREST", CVAR_ARCHIVE);
@@ -135,15 +133,19 @@ void R_RegisterCvarsAndCommands(void)
 
 	gl_ext_swapinterval = ri.Cvar_Get("gl_ext_swapinterval", "1", CVAR_ARCHIVE);
 	gl_ext_pointparameters = ri.Cvar_Get("gl_ext_pointparameters", "1", CVAR_ARCHIVE);
-	gl_ext_compiled_vertex_array = ri.Cvar_Get("gl_ext_compiled_vertex_array", "1", CVAR_ARCHIVE);
 
 	r_drawbuffer = ri.Cvar_Get("r_drawbuffer", "GL_BACK", CVAR_CHEAT);
 	r_swapinterval = ri.Cvar_Get("r_swapinterval", "1", CVAR_ARCHIVE);
+
+	// --- begin yquake2 ---
+	r_overbrightbits = ri.Cvar_Get("r_overbrightbits", "1", CVAR_ARCHIVE);
+	// --- end yquake2 ---
 
 	r_saturatelighting = ri.Cvar_Get("r_saturatelighting", "0", CVAR_CHEAT);
 
 	r_fullscreen = ri.Cvar_Get("r_fullscreen", "0", CVAR_ARCHIVE);
 	r_gamma = ri.Cvar_Get("r_gamma", "1.0", CVAR_ARCHIVE);
+
 	r_renderer = ri.Cvar_Get("r_renderer", DEFAULT_RENDERER, CVAR_ARCHIVE);
 
 	ri.Cmd_AddCommand("imagelist", GL_ImageList_f);
@@ -302,7 +304,7 @@ int R_Init(void* hinstance, void* hWnd)
 #ifdef WIN32
 	if (strstr(gl_config.extensions_string, "GL_EXT_compiled_vertex_array"))
 	{
-		ri.Con_Printf(PRINT_ALL, "...enabling GL_EXT_compiled_vertex_array\n");
+//		ri.Con_Printf(PRINT_ALL, "...enabling GL_EXT_compiled_vertex_array\n");
 		qglLockArraysEXT = (void*)qwglGetProcAddress("glLockArraysEXT");
 		qglUnlockArraysEXT = (void*)qwglGetProcAddress("glUnlockArraysEXT");
 	}
@@ -351,7 +353,9 @@ int R_Init(void* hinstance, void* hWnd)
 		ri.Sys_Error(ERR_FATAL, "GL_ARB_multitexture not found\n");
 	}
 #endif
-
+	ri.Con_Printf(PRINT_ALL, "--- GL_ARB_multitexture forced off ---\n");
+	qglActiveTextureARB = 0;
+	qglMultiTexCoord2fARB = 0;
 	GL_SetDefaultState();
 	R_InitialOGLState(); //wip
 

@@ -33,6 +33,7 @@ DYNAMIC LIGHTS BLEND RENDERING
 =============================================================================
 */
 
+#if 0
 void R_RenderDlight (dlight_t *light)
 {
 	int		i, j;
@@ -60,19 +61,19 @@ void R_RenderDlight (dlight_t *light)
 	}
 	qglEnd ();
 }
+#endif
 
 /*
 =============
 R_RenderDlights
 =============
 */
+
+#if 0
 void R_RenderDlights (void)
 {
 	int		i;
 	dlight_t	*l;
-
-	if (!r_flashblend->value)
-		return;
 
 	r_dlightframecount = r_framecount + 1;	// because the count hasn't
 											//  advanced yet for this frame
@@ -92,7 +93,7 @@ void R_RenderDlights (void)
 	R_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	R_WriteToDepthBuffer(GL_TRUE);
 }
-
+#endif
 
 /*
 =============================================================================
@@ -157,9 +158,6 @@ void R_PushDlights (void)
 {
 	int		i;
 	dlight_t	*l;
-
-	if (r_flashblend->value)
-		return;
 
 	r_dlightframecount = r_framecount + 1;	// because the count hasn't
 											//  advanced yet for this frame
@@ -229,7 +227,7 @@ int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 	surf = r_worldmodel->surfaces + node->firstsurface;
 	for (i=0 ; i<node->numsurfaces ; i++, surf++)
 	{
-		if (surf->flags&(SURF_DRAWTURB|SURF_DRAWSKY)) 
+		if (surf->flags & (SURF_DRAWTURB|SURF_DRAWSKY)) 
 			continue;	// no lightmaps
 
 		tex = surf->texinfo;
@@ -325,9 +323,7 @@ void R_LightPoint (vec3_t p, vec3_t color)
 	dl = r_newrefdef.dlights;
 	for (lnum=0 ; lnum<r_newrefdef.num_dlights ; lnum++, dl++)
 	{
-		VectorSubtract (currententity->origin,
-						dl->origin,
-						dist);
+		VectorSubtract (currententity->origin, dl->origin, dist); // distance
 		add = dl->intensity - VectorLength(dist);
 		add *= (1.0/256);
 		if (add > 0)
@@ -373,8 +369,7 @@ void R_AddDynamicLights (msurface_t *surf)
 
 		dl = &r_newrefdef.dlights[lnum];
 		frad = dl->intensity;
-		fdist = DotProduct (dl->origin, surf->plane->normal) -
-				surf->plane->dist;
+		fdist = DotProduct (dl->origin, surf->plane->normal) - surf->plane->dist;
 		frad -= fabs(fdist);
 		// rad is now the highest intensity on the plane
 

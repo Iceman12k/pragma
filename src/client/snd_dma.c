@@ -127,7 +127,7 @@ void S_Init (void)
 		s_volume = Cvar_Get ("s_volume", "0.7", CVAR_ARCHIVE);
 		s_khz = Cvar_Get ("s_khz", "22", CVAR_ARCHIVE);
 		s_loadas8bit = Cvar_Get ("s_loadas8bit", "0", CVAR_ARCHIVE);
-		s_mixahead = Cvar_Get ("s_mixahead", "0.05", CVAR_ARCHIVE);
+		s_mixahead = Cvar_Get ("s_mixahead", "0.2", CVAR_ARCHIVE);
 		s_show = Cvar_Get ("s_show", "0", 0);
 		s_testsound = Cvar_Get ("s_testsound", "0", 0);
 		s_primary = Cvar_Get ("s_primary", "0", CVAR_ARCHIVE);	// win32 specific
@@ -829,17 +829,19 @@ void S_AddLoopSounds (void)
 		num = (cl.frame.parse_entities + i)&(MAX_PARSE_ENTITIES-1);
 		ent = &cl_parse_entities[num];
 
+		// --- begin Reki ---
 		// if it's local to the player don't attenuate at all
-		if (ent->number == cl.playernum+1)
+		if (ent->number == cl.playernum + 1)
 		{
 			left_total = 255;
 			right_total = 255;
 		}
 		else
 		{
-			S_SpatializeOrigin (ent->origin, 255.0, SOUND_LOOPATTENUATE, &left_total, &right_total);
+			S_SpatializeOrigin(ent->origin, 255.0, SOUND_LOOPATTENUATE, &left_total, &right_total);
 		}
-		
+		// -- end Reki ---
+
 		// find the total contribution of all sounds of this type
 		for (j=i+1 ; j<cl.frame.num_entities ; j++)
 		{

@@ -21,9 +21,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "server.h"
 
+#ifdef __linux__
+#include <limits.h>
+#endif
+
 gentity_t	*sv_entity;	// currently run entity
 
-void ServerCommand(void) {}
 void WriteGame(char* filename, qboolean autosave) {}
 void ReadGame(char* filename) {}
 void WriteLevel(char* filename) {}
@@ -436,8 +439,6 @@ void SV_LinkEdict (gentity_t *ent)
 	if (ent->v.solid == SOLID_BSP && (ent->v.angles[0] || ent->v.angles[1] || ent->v.angles[2]) )
 	{	// expand for rotation
 		float		max, v;
-		int			i;
-
 		max = 0;
 		for (i=0 ; i<3 ; i++)
 		{
@@ -713,12 +714,13 @@ int SV_HullForEntity(gentity_t* ent)
 	if (ent->v.solid == SOLID_BSP)
 	{
 		// explicit hulls in the BSP model
-		model = sv.models[ent->s.modelindex].bmodel;
+		model = sv.models[(int)ent->v.modelindex].bmodel;
 
 		if (!model)
 		{
 			Scr_RunError("MOVETYPE_PUSH with a non BSP model for entity %s (%i) at [%i %i %i]\n", Scr_GetString(ent->v.classname),
 				NUM_FOR_EDICT(ent), (int)ent->v.origin[0], (int)ent->v.origin[1], (int)ent->v.origin[2]);
+			return -1; // msvc
 		}
 
 		return model->headnode;

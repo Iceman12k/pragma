@@ -25,9 +25,9 @@ int scr_numBuiltins = 0;
 const qcvmdef_t vmDefs[NUM_SCRIPT_VMS] =
 {
 	{VM_NONE, NULL, 0, "shared"},
-	{VM_SVGAME, "progs/svgame.dat", 19248, "svgame"},
+	{VM_SVGAME, "progs/svgame.dat", 63850, "svgame"},
 	{VM_CLGAME, "progs/cgame.dat", 42847, "clgame"},
-	{VM_GUI, "progs/guis.dat", 0, "gui"}
+	{VM_GUI, "progs/gui.dat", 0, "gui"}
 };
 
 
@@ -103,39 +103,6 @@ ddef_t* Scr_FindEntityField(char* name)
 
 /*
 =============
-Scr_NewString
-=============
-*/
-char* Scr_NewString(char* string)
-{
-	char* newb, * new_p;
-	int		i, l;
-
-	l = strlen(string) + 1;
-
-	newb = Z_TagMalloc(l, TAG_SERVER_GAME);
-
-	new_p = newb;
-
-	for (i = 0; i < l; i++)
-	{
-		if (string[i] == '\\' && i < l - 1)
-		{
-			i++;
-			if (string[i] == 'n')
-				*new_p++ = '\n';
-			else
-				*new_p++ = '\\';
-		}
-		else
-			*new_p++ = string[i];
-	}
-
-	return newb;
-}
-
-/*
-=============
 Scr_ParseEpair
 
 Can parse either fields or globals
@@ -156,11 +123,15 @@ qboolean Scr_ParseEpair(void* base, ddef_t* key, char* s)
 	switch (key->type & ~DEF_SAVEGLOBAL)
 	{
 	case ev_string:
-		*(scr_string_t*)d = Scr_NewString(s) - active_qcvm->strings;
+		*(scr_string_t*)d = COM_NewString(s, TAG_SERVER_GAME) - active_qcvm->strings;
 		break;
 
 	case ev_float:
 		*(float*)d = atof(s);
+		break;
+
+	case ev_integer:
+		*(int*)d = atoi(s);
 		break;
 
 	case ev_vector:
@@ -342,7 +313,7 @@ void Scr_LoadProgs(qcvm_t *vm, char* filename)
 	vm->crc = CRC_Block(vm->progs, len);
 
 #if PROGS_CHECK_CRC == 1
-	if (vm->progs->crc != vmDefs[vm->progsType].defs_crc_checksum )
+	if (vmDefs[vm->progsType].defs_crc_checksum != 0 && vm->progs->crc != vmDefs[vm->progsType].defs_crc_checksum )
 	{
 		Com_Error(ERR_DROP, "\"%s\" has wrong defs crc = '%i' (recompile progs with up to date headers)\n", filename, vm->progs->crc);
 		return;
@@ -445,7 +416,9 @@ void cmd_printedicts_f(void);
 
 void Scr_CreateScriptVM(vmType_t vmType, unsigned int numEntities, size_t entitySize, size_t entvarOfs)
 {
+	Scr_BindVM(VM_NONE);
 	Scr_FreeScriptVM(vmType);
+
 //	if (qcvm[progsType] != NULL)
 //		Com_Error(ERR_FATAL, "Tried to create second instance of %s script VM\n", Scr_VMName(progsType));
 
@@ -674,6 +647,7 @@ void Scr_Shutdown()
 	}
 }
 
+#ifndef DEDICATED_ONLY
 typedef enum
 {
 	XALIGN_NONE = 0,
@@ -731,4 +705,4 @@ void PR_Profile(int x, int y)
 		UI_DrawString(x, y+10*i, XALIGN_RIGHT, str[i]);
 }
 
-
+#endif

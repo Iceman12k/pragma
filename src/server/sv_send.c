@@ -418,7 +418,7 @@ SV_SendClientDatagram
 extern void SV_EntityStateToProgVars(gentity_t* ent, entity_state_t* state);
 extern void SV_RestoreEntityStateAfterClient(gentity_t* ent);
 
-qboolean SV_SendClientDatagram (client_t *client)
+qboolean SV_SendClientDatagram(client_t *client)
 {
 	byte		msg_buf[MAX_MSGLEN];
 	sizebuf_t	msg;
@@ -454,7 +454,7 @@ qboolean SV_SendClientDatagram (client_t *client)
 	SZ_Clear (&client->datagram);
 
 #if 0 //handy stats
-	Com_Printf("#%i - datagram for client %i (%s): %i/%ib (%i ents)\n", sv.framenum , client->edict->s.number-1, client->name, msg.cursize, msg.maxsize, client->frames[sv.framenum & UPDATE_MASK].num_entities);
+	Com_Printf("#%i - datagram for %i (%s): %i/%ib (%i ents)\n", sv.framenum , client->edict->s.number-1, client->name, msg.cursize, msg.maxsize, client->frames[sv.framenum & UPDATE_MASK].num_entities);
 #endif
 
 	if (msg.overflowed)
@@ -574,13 +574,12 @@ void SV_SendClientMessages (void)
 	{
 		if (!c->state)
 			continue;
-		// if the reliable message overflowed,
-		// drop the client
+		// if the reliable message overflowed, drop the client
 		if (c->netchan.message.overflowed)
 		{
 			SZ_Clear (&c->netchan.message);
 			SZ_Clear (&c->datagram);
-			SV_BroadcastPrintf (PRINT_HIGH, "%s overflowed\n", c->name);
+			SV_BroadcastPrintf (PRINT_HIGH, "Player `%s` overflowed.\n", c->name);
 			SV_DropClient (c);
 		}
 

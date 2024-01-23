@@ -21,15 +21,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qcommon.h"
 
 // define this to dissalow any data but the demo pak file
-//#define	NO_ADDONS
+//#define	NO_ADDONS 
 
 // if a packfile directory differs from this, it is assumed to be hacked
-// Full version
 #define	PAK0_CHECKSUM	0x40e614e0
-// Demo
-//#define	PAK0_CHECKSUM	0xb2c6d7ea
-// OEM
-//#define	PAK0_CHECKSUM	0x78e135c
 
 /*
 =============================================================================
@@ -413,6 +408,44 @@ void FS_FreeFile (void *buffer)
 {
 	Z_Free (buffer);
 }
+
+/*
+=============
+FS_LoadTextFile
+
+Filename are reletive to the quake search path
+allocated buffer will be filed with file contents, null terminated
+use Z_Free or FS_FreeFile to cleanup buffer
+=============
+*/
+int FS_LoadTextFile(char* filename, char** buffer)
+{
+	int		len;
+	byte	* buf;
+	byte	*raw;
+
+	//
+	// load file
+	//
+	len = FS_LoadFile(filename, (void**)&raw);
+	if (!len || len == -1)
+	{
+		if (buffer)
+			*buffer = NULL;
+		return len;
+	}
+
+	// NULL terminate the file
+	buf = Z_Malloc(len + 1);
+	*buffer = buf;
+
+	memcpy(buf, raw, len);
+	buf[len] = 0;
+
+	FS_FreeFile(raw);
+	return len+1;
+}
+
 
 /*
 =================

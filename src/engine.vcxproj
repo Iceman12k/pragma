@@ -19,38 +19,40 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cgame\cgame.h" />
     <ClInclude Include="client\adivtab.h" />
-    <ClInclude Include="client\anorms.h" />
+    <ClInclude Include="client\cgame\cgame.h" />
     <ClInclude Include="client\client.h" />
     <ClInclude Include="client\console.h" />
     <ClInclude Include="client\input.h" />
     <ClInclude Include="client\keys.h" />
-    <ClInclude Include="client\qmenu.h" />
     <ClInclude Include="client\ref.h" />
     <ClInclude Include="client\screen.h" />
     <ClInclude Include="client\snd_loc.h" />
     <ClInclude Include="client\sound.h" />
+    <ClInclude Include="client\ui\gui.h" />
+    <ClInclude Include="client\ui\ui_local.h" />
     <ClInclude Include="client\vid.h" />
     <ClInclude Include="pragma_config.h" />
+    <ClInclude Include="qcommon\anorms.h" />
     <ClInclude Include="qcommon\crc.h" />
     <ClInclude Include="qcommon\qcommon.h" />
     <ClInclude Include="qcommon\qfiles.h" />
-    <ClInclude Include="qcommon\q_shared.h" />
+    <ClInclude Include="qcommon\shared.h" />
     <ClInclude Include="script\progdefs_client.h" />
     <ClInclude Include="script\progdefs_server.h" />
+    <ClInclude Include="script\progdefs_ui.h" />
     <ClInclude Include="script\qc_opcodes.h" />
     <ClInclude Include="script\qc_opnames.h" />
     <ClInclude Include="script\scriptvm.h" />
     <ClInclude Include="script\script_internals.h" />
     <ClInclude Include="server\server.h" />
     <ClInclude Include="server\sv_game.h" />
-    <ClInclude Include="platform\conproc.h" />
     <ClInclude Include="platform\resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="cgame\cg_builtins.c" />
-    <ClCompile Include="cgame\cg_main.c" />
+    <ClCompile Include="client\cgame\cg_builtins.c" />
+    <ClCompile Include="client\cgame\cg_main.c" />
+    <ClCompile Include="client\cgame\modeldef.c" />
     <ClCompile Include="client\cl_cin.c" />
     <ClCompile Include="client\cl_download.c" />
     <ClCompile Include="client\cl_ents.c" />
@@ -67,10 +69,11 @@
     <ClCompile Include="client\console.c" />
     <ClCompile Include="client\keys.c" />
     <ClCompile Include="client\menu.c" />
-    <ClCompile Include="client\qmenu.c" />
     <ClCompile Include="client\snd_dma.c" />
     <ClCompile Include="client\snd_mem.c" />
     <ClCompile Include="client\snd_mix.c" />
+    <ClCompile Include="client\ui\ui_load.c" />
+    <ClCompile Include="client\ui\ui_main.c" />
     <ClCompile Include="qcommon\navigation.c" />
     <ClCompile Include="qcommon\cmd.c" />
     <ClCompile Include="qcommon\cmodel.c" />
@@ -80,8 +83,7 @@
     <ClCompile Include="qcommon\files.c" />
     <ClCompile Include="qcommon\md4.c" />
     <ClCompile Include="qcommon\net_chan.c" />
-    <ClCompile Include="qcommon\pmove.c" />
-    <ClCompile Include="qcommon\q_shared.c" />
+    <ClCompile Include="qcommon\shared.c" />
     <ClCompile Include="script\scr_builtins_math.c" />
     <ClCompile Include="script\scr_debug.c" />
     <ClCompile Include="script\scr_exec.c" />
@@ -102,12 +104,11 @@
     <ClCompile Include="server\sv_send.c" />
     <ClCompile Include="server\sv_user.c" />
     <ClCompile Include="server\sv_world.c" />
-    <ClCompile Include="platform\conproc.c" />
-    <ClCompile Include="platform\in_win.c" />
-    <ClCompile Include="platform\net_wins.c" />
-    <ClCompile Include="platform\q_shwin.c" />
-    <ClCompile Include="platform\snd_win.c" />
-    <ClCompile Include="platform\sys_win.c" />
+    <ClCompile Include="platform\win_input.c" />
+    <ClCompile Include="platform\win_net.c" />
+    <ClCompile Include="platform\win_shared.c" />
+    <ClCompile Include="platform\win_sound.c" />
+    <ClCompile Include="platform\win_main.c" />
     <ClCompile Include="platform\vid_dll.c" />
     <ClCompile Include="platform\vid_menu.c" />
   </ItemGroup>
@@ -175,10 +176,13 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>.\..\build\</OutDir>
     <RunCodeAnalysis>false</RunCodeAnalysis>
+    <TargetName>$(ProjectName)</TargetName>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>.\..\build\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>

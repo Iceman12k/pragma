@@ -601,7 +601,7 @@ void CL_Disconnect (void)
 
 	VectorClear (cl.refdef.blend);
 
-	M_ForceMenuOff ();
+	UI_CloseAllGuis();
 
 	cls.connect_time = 0;
 
@@ -759,7 +759,7 @@ void CL_ParseStatusMessage (void)
 	str = MSG_ReadString(&net_message);
 
 	Com_Printf("%s - %s\n", NET_AdrToString(net_from), str);
-	M_AddToServerList (net_from, str);
+//	M_AddToServerList (net_from, str);
 }
 
 
@@ -1045,6 +1045,7 @@ void CL_PrintEnts_f(void)
 CL_InitLocal
 =================
 */
+extern void CL_Test_f(void);
 void CL_InitLocal (void)
 {
 	cls.state = ca_disconnected;
@@ -1154,6 +1155,9 @@ void CL_InitLocal (void)
 	Cmd_AddCommand("changing", CL_Changing_f);
 	Cmd_AddCommand("precache", CL_Precache_f);
 	Cmd_AddCommand("download", CL_Download_f);
+
+
+	Cmd_AddCommand("test", CL_Test_f);
 
 	//
 	// forward to server commands
@@ -1373,6 +1377,11 @@ void CL_Frame (int msec)
 	// run cgame
 	CG_Frame(cls.frametime, cl.time, cls.realtime);
 
+#ifdef NEW_GUI
+	// run ui
+	UI_Main();
+#endif
+
 	// send a new command message to the server
 	CL_SendCommand ();
 
@@ -1449,7 +1458,9 @@ void CL_Init (void)
 	net_message.data = net_message_buffer;
 	net_message.maxsize = sizeof(net_message_buffer);
 
-	M_Init ();	
+#ifdef NEW_GUI
+	UI_Init();
+#endif
 	
 	SCR_Init ();
 	cls.disable_screen = true;	// don't draw yet

@@ -43,6 +43,8 @@ void Scr_Think(gentity_t* self)
 
 	self->v.nextthink = 0;
 
+	
+	sv.script_globals->sv_time = sv.time;
 	sv.script_globals->g_time = sv.gameTime;
 	sv.script_globals->self = GENT_TO_PROG(self);
 	sv.script_globals->other = GENT_TO_PROG(sv.edicts);
@@ -116,6 +118,7 @@ void SV_ScriptMain()
 	sv.script_globals->self = sv.script_globals->worldspawn;
 	sv.script_globals->other = sv.script_globals->worldspawn;
 
+	sv.script_globals->sv_time = sv.time;
 	sv.script_globals->g_time = sv.gameTime;
 	sv.script_globals->g_frameNum = sv.gameFrame;
 	sv.script_globals->g_frameTime = SV_FRAMETIME;
@@ -129,6 +132,7 @@ void SV_ScriptStartFrame()
 	sv.script_globals->worldspawn = GENT_TO_PROG(sv.edicts);
 	sv.script_globals->self = sv.script_globals->worldspawn;
 	sv.script_globals->other = sv.script_globals->worldspawn;
+	sv.script_globals->sv_time = sv.time;
 	sv.script_globals->g_time = sv.gameTime;
 	sv.script_globals->g_frameNum = sv.gameFrame;
 	sv.script_globals->g_frameTime = SV_FRAMETIME;
@@ -141,6 +145,7 @@ void SV_ScriptEndFrame()
 	sv.script_globals->self = sv.script_globals->worldspawn;
 	sv.script_globals->other = sv.script_globals->worldspawn;
 	sv.script_globals->g_time = sv.gameTime;
+	sv.script_globals->sv_time = sv.time;
 	Scr_Execute(VM_SVGAME, sv.script_globals->EndFrame, __FUNCTION__);
 }
 
@@ -216,8 +221,11 @@ Will not be called between levels.
 void Scr_ClientDisconnect(gentity_t* self)
 {
 	gentity_t* ent;
+
 	if (!self->client)
 		return;
+
+	SV_SetConfigString((CS_CLIENTS + (NUM_FOR_ENT(self) - 1)), NULL);
 
 	Scr_BindVM(VM_SVGAME);
 	for (int i = 1; i < sv.num_edicts; i++)
@@ -236,7 +244,9 @@ void Scr_ClientDisconnect(gentity_t* self)
 		{
 			if (ent->v.showto == self->s.number) //NUM_FOR_ENT(self))
 			{
-				(int)ent->v.svflags &= ~SVF_SINGLECLIENT;
+				int temp = ent->v.svflags;
+				temp &= ~SVF_SINGLECLIENT;
+				ent->v.svflags = temp;
 				ent->v.showto = 0;
 //				break;
 			}
@@ -393,6 +403,8 @@ void SV_ProgVarsToEntityState(gentity_t* ent)
 	ent->s.modelindex3 = ent->v.modelindex3;
 	ent->s.modelindex4 = ent->v.modelindex3;
 
+	ent->s.anim = ent->v.anim;
+	ent->s.animtime = ent->v.animtime;
 	ent->s.frame = (int)ent->v.animFrame;
 	ent->s.skinnum = (int)ent->v.skinnum;
 	ent->s.effects = ent->v.effects;
@@ -424,7 +436,10 @@ void SV_EntityStateToProgVars(gentity_t* ent, entity_state_t* state)
 	ent->v.modelindex3 = state->modelindex3;
 	ent->v.modelindex4 = state->modelindex3;
 
+	ent->v.anim = ent->s.anim;
+	ent->v.animtime = state->animtime;
 	ent->v.animFrame = state->frame;
+
 	ent->v.skinnum = state->skinnum;
 	ent->v.effects = state->effects;
 
@@ -468,6 +483,8 @@ void ClientUserinfoChanged(gentity_t* ent, char* userinfo)
 
 	// save off the userinfo in case we want to check something later
 	strncpy(ent->client->pers.userinfo, userinfo, sizeof(ent->client->pers.userinfo) - 1);
+
+	SV_SetConfigString((CS_CLIENTS + (NUM_FOR_ENT(ent) - 1)), ent->client->pers.netname);
 }
 
 

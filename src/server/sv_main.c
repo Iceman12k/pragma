@@ -62,8 +62,8 @@ extern void Nav_Shutdown();
 //============================================================================
 
 #ifdef _DEBUG
+#ifndef DEDICATED_ONLY
 // completly out of place, used just in debug builds to see stats
-
 typedef enum
 {
 	XALIGN_NONE = 0,
@@ -88,7 +88,8 @@ void ShowServerStats(int x, int y)
 	UI_DrawString(x, y + 10 * 13, XALIGN_RIGHT, "-- profile --");
 	PR_Profile(x, y + 10 * 14);
 }
-#endif
+#endif /*DEDICATED_ONLY*/
+#endif /*_DEBUG*/
 
 /*
 =====================
@@ -713,6 +714,12 @@ void SV_CheckTimeouts (void)
 			cl->state = cs_free;	// can now be reused
 			continue;
 		}
+
+		if (i == 0 && !dedicated->value)
+		{
+			continue; // _NEVER_ timeout the HOST player
+		}
+
 		if ( (cl->state == cs_connected || cl->state == cs_spawned) && cl->lastmessage < droppoint)
 		{
 			SV_BroadcastPrintf (PRINT_HIGH, "Player '%s' timed out.\n", cl->name);
@@ -751,8 +758,7 @@ SV_RunGameFrame
 */
 void SV_RunGameFrame (void)
 {
-	if (host_speeds->value)
-		time_before_game = Sys_Milliseconds ();
+	time_before_game = Sys_Milliseconds ();
 
 	// we always need to bump framenum, even if we don't run the world, otherwise 
 	// the delta compression can get confused when a client has the "current" frame
@@ -773,9 +779,7 @@ void SV_RunGameFrame (void)
 		}
 	}
 
-	if (host_speeds->value)
-		time_after_game = Sys_Milliseconds ();
-
+	time_after_game = Sys_Milliseconds ();
 }
 
 /*
@@ -795,8 +799,7 @@ void SV_SetConfigString(int index, char *valueString)
 		valueString = "";
 
 	// change the string in sv
-	Com_sprintf(sv.configstrings[index], sizeof(sv.configstrings[index]), "%s", valueString);
-//	strcpy(sv.configstrings[index], val); 
+	strncpy(sv.configstrings[index], valueString, sizeof(sv.configstrings[index]));
 
 	if (sv.state != ss_loading)
 	{
@@ -807,7 +810,6 @@ void SV_SetConfigString(int index, char *valueString)
 		SV_Multicast(vec3_origin, MULTICAST_ALL_R); // send the update to everyone
 	}
 }
-
 static inline void SV_NotifyWhenCvarChanged(cvar_t* cvar)
 {
 	if (cvar->modified)
@@ -1012,7 +1014,8 @@ void SV_UserinfoChanged (client_t *cl)
 	{
 		cl->messagelevel = atoi(val);
 	}
-
+	
+	SV_SetConfigString((CS_CLIENTS + (NUM_FOR_ENT(cl->edict) - 1)), cl->name);
 }
 
 

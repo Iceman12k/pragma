@@ -1,0 +1,175 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="qcommon\cmd.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="qcommon\cmodel.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="qcommon\common.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="qcommon\crc.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="qcommon\cvar.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="qcommon\files.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="qcommon\md4.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="qcommon\net_chan.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="platform\win_net.c">
+      <Filter>platform</Filter>
+    </ClCompile>
+    <ClCompile Include="platform\win_shared.c">
+      <Filter>platform</Filter>
+    </ClCompile>
+    <ClCompile Include="platform\win_main.c">
+      <Filter>platform</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_ccmds.c">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_write.c">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_init.c">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_main.c">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_send.c">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_user.c">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_world.c">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_gentity.c">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_physics.c">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_script.c">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="script\scr_main.c">
+      <Filter>script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\scr_exec.c">
+      <Filter>script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\scr_debug.c">
+      <Filter>script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\scr_utils.c">
+      <Filter>script</Filter>
+    </ClCompile>
+    <ClCompile Include="qcommon\shared.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="script\scr_builtins_math.c">
+      <Filter>script</Filter>
+    </ClCompile>
+    <ClCompile Include="script\scr_builtins_shared.c">
+      <Filter>script</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_builtins.c">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_load.c">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_ai.c">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_devtools.c">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="qcommon\navigation.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="client\cgame\cg_builtins.c">
+      <Filter>client\cgame</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="qcommon\crc.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="qcommon\qcommon.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="qcommon\qfiles.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="server\server.h">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="server\sv_game.h">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="qcommon\shared.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="script\progdefs_client.h">
+      <Filter>script\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="script\progdefs_server.h">
+      <Filter>script\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="script\script_internals.h">
+      <Filter>script\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="script\scriptvm.h">
+      <Filter>script\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="script\qc_opnames.h">
+      <Filter>script\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="script\qc_opcodes.h">
+      <Filter>script\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="pragma_config.h" />
+    <ClInclude Include="script\progdefs_ui.h">
+      <Filter>script\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="qcommon\anorms.h">
+      <Filter>common</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="client">
+      <UniqueIdentifier>{1f586665-606b-4ad1-8e64-423c2089dc00}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="server">
+      <UniqueIdentifier>{e064b09a-a4a4-4118-aa1a-e17a8c7f8413}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common">
+      <UniqueIdentifier>{3b3b4053-c0a8-4a0c-905c-91c3ac014760}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="script">
+      <UniqueIdentifier>{fbe0844a-3483-4415-a6d0-02601ee598a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="script\headers">
+      <UniqueIdentifier>{5c3969ca-48d6-4121-895a-6b6a5db6767f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="platform">
+      <UniqueIdentifier>{2b77c318-d5b8-47fd-99a7-de7f1659962e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="client\cgame">
+      <UniqueIdentifier>{355b264e-e96f-43f9-94c4-037e89a2a0e8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

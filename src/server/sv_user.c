@@ -207,8 +207,7 @@ void SV_Baselines_f (void)
 
 	// write a packet full of data
 
-	while ( sv_client->netchan.message.cursize <  MAX_MSGLEN/2
-		&& start < MAX_GENTITIES)
+	while ( sv_client->netchan.message.cursize <  MAX_MSGLEN/2 && start < MAX_GENTITIES)
 	{
 		base = &sv.baselines[start];
 		if (base->modelindex || base->loopingSound || base->effects)
@@ -279,10 +278,13 @@ void SV_Begin_f (void)
 		Scr_ClientBegin(ent);
 		SV_LinkEdict(ent);
 	}
+
 //	SV_InitEntity(ent);
 //	Scr_ClientBegin(ent);
+// 
 	// make sure all view stuff is valid
 	Scr_ClientEndServerFrame(ent);
+	SV_SetConfigString((CS_CLIENTS + (NUM_FOR_ENT(ent) - 1)), ent->client->pers.netname);
 
 	Cbuf_InsertFromDefer ();
 }
@@ -346,7 +348,7 @@ void SV_BeginDownload_f(void)
 	if (Cmd_Argc() > 2)
 		offset = atoi(Cmd_Argv(2)); // downloaded offset
 
-	// hacked by zoid to allow more conrol over download
+	// hacked by zoid to allow more control over download
 	// first off, no .. or global allow check
 	if (strstr (name, "..") || !allow_download->value
 		// leading dot is no good

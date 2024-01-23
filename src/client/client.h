@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "ref.h"
+#include "../qcommon/renderer.h"
 
 #include "vid.h"
 #include "screen.h"
@@ -36,7 +36,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "keys.h"
 #include "console.h"
 
-#include "../cgame/cgame.h"
+#include "./cgame/cgame.h"
+
+#ifdef NEW_GUI
+	#include "./ui/gui.h"
+#endif
+
 //=============================================================================
 
 #define CHAR_SIZEX 8
@@ -62,6 +67,7 @@ typedef struct
 	int				parse_entities;	// non-masked index into cl_parse_entities array
 } frame_t;
 
+
 typedef struct
 {
 	entity_state_t	baseline;		// delta from this if not from a previous frame
@@ -69,11 +75,16 @@ typedef struct
 	entity_state_t	prev;			// will always be valid, but might just be a copy of current
 
 	int			serverframe;		// if not current, this ent isn't in the frame
+									// servertime = serverframe * sv_fps;
 
 	int			trailcount;			// for diminishing grenade trails
 	vec3_t		lerp_origin;		// for trails (variable hz)
 
 	int			fly_stoptime;
+
+	animstate_t	anim;
+
+
 } ccentity_t;
 
 
@@ -556,16 +567,6 @@ void CL_BfgParticles (centity_t *ent); // unused
 void CL_AddParticles (void);
 void CL_EntityEvent (entity_state_t *ent);
 void CL_TrapParticles (centity_t *ent);
-
-//
-// menus
-//
-void M_Init (void);
-void M_Keydown (int key);
-void M_Draw (void);
-void M_Menu_Main_f (void);
-void M_ForceMenuOff (void);
-void M_AddToServerList (netadr_t adr, char *info);
 
 //
 // cl_inv.c TODO: remove inventory from kernel entirely
